@@ -9,7 +9,15 @@ tags: ["org:ocamlpro" "org:opam"]
 license: "LGPL-2.1-only with OCaml-LGPL-linking-exception"
 depends: [
   "dune"
-  "opam-client"
+  "opam-client" {>= "2.1.0~beta2"}
 ]
 build: ["dune" "build" "-p" name "-j" jobs]
 flags: plugin
+pin-depends: [
+  ["opam-client.2.1.0~beta2" "git+ssh://git@github.com/ocaml/opam.git#2.1.0-beta2"]
+  ["opam-state.2.1.0~beta2" "git+ssh://git@github.com/ocaml/opam.git#2.1.0-beta2"]
+  ["opam-solver.2.1.0~beta2" "git+ssh://git@github.com/ocaml/opam.git#2.1.0-beta2"]
+  ["opam-repository.2.1.0~beta2" "git+ssh://git@github.com/ocaml/opam.git#2.1.0-beta2"]
+  ["opam-format.2.1.0~beta2" "git+ssh://git@github.com/ocaml/opam.git#2.1.0-beta2"]
+  ["opam-core.2.1.0~beta2" "git+ssh://git@github.com/ocaml/opam.git#2.1.0-beta2"]
+]
