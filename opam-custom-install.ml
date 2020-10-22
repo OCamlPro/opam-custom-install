@@ -64,7 +64,10 @@ let custom_install =
       global_options build_options no_recompilations package cmd =
     OpamArg.apply_global_options global_options;
     OpamArg.apply_build_options build_options;
-    OpamClientConfig.update ~inplace_build:true ();
+    OpamClientConfig.update
+      ~inplace_build:true
+      ~working_dir:true
+      ();
     OpamGlobalState.with_ `Lock_none @@ fun gt ->
     OpamSwitchState.with_ `Lock_write gt @@ fun st ->
     let nv = match package with
@@ -84,7 +87,6 @@ let custom_install =
         ("Package installed using 'opam custom-install' from "^
          OpamFilename.Dir.to_string build_dir)
       |> OpamFile.OPAM.with_url (* needed for inplace_build correct build dir *)
-        (* FIXME: but that incurs an undesirable sync *)
         (OpamFile.URL.create
            (OpamUrl.parse ~backend:`rsync
               (OpamFilename.Dir.to_string build_dir)))
