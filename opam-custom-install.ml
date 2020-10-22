@@ -213,11 +213,12 @@ let custom_install =
   in
   let cmd =
     Arg.(non_empty & pos_right 0 string [] &
-         info [] ~docv:"-- COMMAND [ARG]"
-           ~doc:
+         info [] ~docv:"-- COMMAND [ARG]" ~doc:
            "Command to run in the current directory that is expected to \
             install the files for $(i,PACKAGE) to the current opam switch \
-            prefix.")
+            prefix. Variable expansions like $(b,%{prefix}%), $(b,%{name}%), \
+            $(b,%{version}%) and $(b,%{package}) are expanded as per the \
+            $(i,install:) package definition field.")
   in
   let custom_install
       global_options build_options no_recompilations package cmd =
@@ -252,15 +253,21 @@ let custom_install =
       {st with
        opams = OpamPackage.Map.add nv opam st.opams;
        packages = OpamPackage.Set.add nv st.packages;
-       available_packages = lazy (OpamPackage.Set.add nv (Lazy.force st.available_packages));
+       available_packages =
+         lazy (OpamPackage.Set.add nv (Lazy.force st.available_packages));
       }
     in
     let simple_install () =
       (* when no recompilations are needed *)
-      if is_installed then
-        OpamProcess.Job.run @@
-        OpamAction.remove_package st ~force:true @@
-        OpamPackage.package_of_name st.installed nv.name;
+      let st =
+        if is_installed then
+          let old_pkg = OpamPackage.package_of_name st.installed nv.name in
+          let st = OpamSwitchAction.remove_from_installed st old_pkg in
+          OpamProcess.Job.run @@
+          OpamAction.remove_package st ~force:true old_pkg;
+          st
+        else st
+      in
       match
         OpamProcess.Job.run @@
         OpamAction.install_package st ~build_dir nv
