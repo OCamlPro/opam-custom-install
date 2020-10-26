@@ -45,8 +45,8 @@ let custom_install =
            "Just do the installation, ignoring and preserving the state of any \
             dependent packages.")
   in
-  let package =
-    Arg.(required & pos 0 (some OpamArg.package) None &
+  let packages =
+    Arg.(non_empty & pos 0 (list OpamArg.package) [] &
          info [] ~docv:"PACKAGE[.VERSION]" ~doc:
            "Package which should be registered as installed with the files \
             installed by $(i,COMMAND).")
@@ -61,7 +61,7 @@ let custom_install =
             $(i,install:) package definition field.")
   in
   let custom_install
-      global_options build_options no_recompilations package cmd =
+      global_options build_options no_recompilations packages cmd =
     OpamArg.apply_global_options global_options;
     OpamArg.apply_build_options build_options;
     OpamClientConfig.update
@@ -70,16 +70,19 @@ let custom_install =
       ();
     OpamGlobalState.with_ `Lock_none @@ fun gt ->
     OpamSwitchState.with_ `Lock_write gt @@ fun st ->
-    let nv = match package with
+    let get_nv package = match package with
       | name, Some v -> OpamPackage.create name v
       | name, None ->
         try OpamSwitchState.get_package st name
         with Not_found ->
           OpamPackage.create name (OpamPackage.Version.of_string "~dev")
     in
-    let is_installed = OpamSwitchState.is_name_installed st nv.name in
+    let nvs =
+      List.fold_left (fun acc p -> OpamPackage.Set.add (get_nv p) acc)
+        OpamPackage.Set.empty packages
+    in
     let build_dir = OpamFilename.cwd () in
-    let opam =
+    let mk_opam nv =
       OpamFile.OPAM.create nv
       |> OpamFile.OPAM.with_install
         [List.map (fun a -> CString a, None) cmd, None]
@@ -91,41 +94,26 @@ let custom_install =
            (OpamUrl.parse ~backend:`rsync
               (OpamFilename.Dir.to_string build_dir)))
     in
+    let opams =
+      OpamPackage.Set.fold
+        (fun nv -> OpamPackage.Map.add nv (mk_opam nv))
+        nvs OpamPackage.Map.empty
+    in
     let st =
       {st with
-       opams = OpamPackage.Map.add nv opam st.opams;
-       packages = OpamPackage.Set.add nv st.packages;
+       opams = OpamPackage.Map.union (fun _ o -> o) st.opams opams;
+       packages = OpamPackage.Set.union st.packages nvs;
        available_packages =
-         lazy (OpamPackage.Set.add nv (Lazy.force st.available_packages));
+         lazy (OpamPackage.Set.union (Lazy.force st.available_packages) nvs);
       }
     in
-    let simple_install () =
-      (* when no recompilations are needed *)
-      let st =
-        if is_installed then
-          let old_pkg = OpamPackage.package_of_name st.installed nv.name in
-          let st = OpamSwitchAction.remove_from_installed st old_pkg in
-          OpamProcess.Job.run @@
-          OpamAction.remove_package st ~force:true old_pkg;
-          st
-        else st
-      in
-      match
-        OpamProcess.Job.run @@
-        OpamAction.install_package st ~build_dir nv
-      with
-      | Some exn -> raise exn
-      | None -> OpamSwitchAction.add_to_installed st ~root:true nv
-    in
     let st =
-      if no_recompilations || not is_installed then simple_install ()
-      else
-      let atoms = [OpamSolution.eq_atom_of_package nv] in
+      let atoms = OpamSolution.eq_atoms_of_packages nvs in
       let st, full_orphans, orphan_versions =
         OpamClient.check_conflicts st atoms
       in
       let request = OpamSolver.request ~install:atoms ~criteria:`Fixup () in
-      let requested = OpamPackage.Name.Set.singleton nv.name in
+      let requested = OpamPackage.names_of_packages nvs in
       let solution =
         OpamSolution.resolve st Reinstall
           ~orphans:(full_orphans ++ orphan_versions)
@@ -142,9 +130,13 @@ let custom_install =
                (OpamSwitchState.unavailable_reason st) cs);
           OpamStd.Sys.exit_because `No_solution
         | Success solution ->
-          (* let solution = OpamSolver.filter_solution ((<>) nv) solution in
-           * OpamSolver.filter_solution
-           * if OpamSolver.solution_is_empty solution then simple_install () *)
+          let solution =
+            if no_recompilations then
+              OpamSolver.filter_solution
+                (fun nv -> OpamPackage.Name.Set.mem nv.name requested)
+                solution
+            else solution
+          in
           OpamSolution.apply st ~requested ~assume_built:true solution
       in
       OpamSolution.check_solution st (Success res);
@@ -154,7 +146,7 @@ let custom_install =
   in
   Term.(const custom_install
         $OpamArg.global_options $OpamArg.build_options
-        $no_recompilations $package $cmd),
+        $no_recompilations $packages $cmd),
   OpamArg.term_info "custom-install" ~doc ~man
 
 let () =
