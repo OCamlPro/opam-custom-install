@@ -15,7 +15,7 @@ open OpamPackage.Set.Op
 let custom_install_doc =
   "Install a package using a custom command."
 
-let custom_install =
+let custom_install cli =
   let doc = custom_install_doc in
   let man = [
     `S Manpage.s_description;
@@ -61,7 +61,7 @@ let custom_install =
             $(i,install:) package definition field.")
   in
   let custom_install
-      global_options build_options no_recompilations packages cmd =
+      global_options build_options no_recompilations packages cmd () =
     OpamArg.apply_global_options global_options;
     OpamArg.apply_build_options build_options;
     OpamClientConfig.update
@@ -144,15 +144,18 @@ let custom_install =
     in
     OpamSwitchState.drop st
   in
-  Term.(const custom_install
-        $OpamArg.global_options $OpamArg.build_options
-        $no_recompilations $packages $cmd),
-  OpamArg.term_info "custom-install" ~doc ~man
+  OpamArg.mk_command cli (OpamArg.cli_from cli) "custom-install" ~doc ~man
+    Term.(const custom_install
+          $ OpamArg.global_options cli
+          $ OpamArg.build_options cli
+          $ no_recompilations $ packages $ cmd)
 
 let () =
+  OpamStd.Option.iter OpamVersion.set_git OpamGitVersion.version;
   OpamSystem.init ();
+  (* OpamArg.preinit_opam_envvariables (); *)
   OpamCliMain.main_catch_all @@ fun () ->
-  match Term.eval ~catch:false custom_install with
+  match Term.eval ~catch:false (custom_install OpamCLIVersion.current) with
   | `Error _ -> exit (OpamStd.Sys.get_exit_code `Bad_arguments)
   | _        -> exit (OpamStd.Sys.get_exit_code `Success)
 
