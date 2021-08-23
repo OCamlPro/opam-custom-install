@@ -11,5 +11,7 @@ depends: [
   "dune"
   "opam-client" {>= "2.1.0"}
 ]
+homepage: "https://gitlab.ocamlpro.com/louis/opam-custom-install"
+bug-reports: "https://gitlab.ocamlpro.com/louis/opam-custom-install/-/issues"
 build: ["dune" "build" "-p" name "-j" jobs]
 flags: plugin
