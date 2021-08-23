@@ -62,7 +62,7 @@ let custom_install cli =
   in
   let custom_install
       global_options build_options no_recompilations packages cmd () =
-    OpamArg.apply_global_options global_options;
+    OpamArg.apply_global_options cli global_options;
     OpamArg.apply_build_options build_options;
     OpamClientConfig.update
       ~inplace_build:true
@@ -144,7 +144,7 @@ let custom_install cli =
     in
     OpamSwitchState.drop st
   in
-  OpamArg.mk_command cli (OpamArg.cli_from cli) "custom-install" ~doc ~man
+  OpamArg.mk_command ~cli OpamArg.cli_original "custom-install" ~doc ~man
     Term.(const custom_install
           $ OpamArg.global_options cli
           $ OpamArg.build_options cli
@@ -155,7 +155,7 @@ let () =
   OpamSystem.init ();
   (* OpamArg.preinit_opam_envvariables (); *)
   OpamCliMain.main_catch_all @@ fun () ->
-  match Term.eval ~catch:false (custom_install OpamCLIVersion.current) with
+  match Term.eval ~catch:false (custom_install (OpamCLIVersion.default, `Default)) with
   | `Error _ -> exit (OpamStd.Sys.get_exit_code `Bad_arguments)
   | _        -> exit (OpamStd.Sys.get_exit_code `Success)
 
