@@ -10,7 +10,6 @@
 
 open Cmdliner
 open OpamTypes
-open OpamPackage.Set.Op
 
 let custom_install_doc =
   "Install a package using a custom command."
@@ -109,14 +108,10 @@ let custom_install cli =
     in
     let st =
       let atoms = OpamSolution.eq_atoms_of_packages nvs in
-      let st, full_orphans, orphan_versions =
-        OpamClient.check_conflicts st atoms
-      in
       let request = OpamSolver.request ~install:atoms ~criteria:`Fixup () in
       let requested = OpamPackage.names_of_packages nvs in
       let solution =
         OpamSolution.resolve st Reinstall
-          ~orphans:(full_orphans ++ orphan_versions)
           ~reinstall:(OpamPackage.packages_of_names st.installed requested)
           ~requested
           request
