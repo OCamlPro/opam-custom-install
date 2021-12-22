@@ -63,7 +63,7 @@ let custom_install cli =
   let custom_install
       global_options build_options no_recompilations packages cmd () =
     OpamArg.apply_global_options cli global_options;
-    OpamArg.apply_build_options build_options;
+    OpamArg.apply_build_options cli build_options;
     OpamClientConfig.update
       ~inplace_build:true
       ~working_dir:true
