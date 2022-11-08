@@ -9,10 +9,23 @@ tags: ["org:ocamlpro" "org:opam"]
 license: "LGPL-2.1-only WITH OCaml-LGPL-linking-exception"
 depends: [
   "dune" {>= "1.5"}
-  "opam-client" {>= "2.1.2" & < "2.2.0"}
+  "opam-client" {= "master-dev"}
+  "opam-state" {= "master-dev"}
+  "opam-repository" {= "master-dev"}
+  "opam-solver" {= "master-dev"}
+  "opam-format" {= "master-dev"}
+  "opam-core" {= "master-dev"}
 ]
 homepage: "https://github.com/OCamlPro/opam-custom-install"
 bug-reports: "https://github.com/OCamlPro/opam-custom-install/-/issues"
 dev-repo: "git+https://github.com/OCamlPro/opam-custom-install"
 build: ["dune" "build" "-p" name "-j" jobs]
 flags: plugin
+pin-depends: [
+  ["opam-client.master-dev"      "git+https://github.com/ocaml/opam#4f0bd719d2d2c8cadc326f7880f61f0ec3078970"]
+  ["opam-state.master-dev"       "git+https://github.com/ocaml/opam#4f0bd719d2d2c8cadc326f7880f61f0ec3078970"]
+  ["opam-repository.master-dev"  "git+https://github.com/ocaml/opam#4f0bd719d2d2c8cadc326f7880f61f0ec3078970"]
+  ["opam-solver.master-dev"      "git+https://github.com/ocaml/opam#4f0bd719d2d2c8cadc326f7880f61f0ec3078970"]
+  ["opam-format.master-dev"      "git+https://github.com/ocaml/opam#4f0bd719d2d2c8cadc326f7880f61f0ec3078970"]
+  ["opam-core.master-dev"        "git+https://github.com/ocaml/opam#4f0bd719d2d2c8cadc326f7880f61f0ec3078970"]
+]
