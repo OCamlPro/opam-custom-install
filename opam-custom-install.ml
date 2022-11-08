@@ -113,7 +113,7 @@ let custom_install cli =
       let solution =
         OpamSolution.resolve st Reinstall
           ~reinstall:(OpamPackage.packages_of_names st.installed requested)
-          ~requested
+          ~requested:nvs
           request
       in
       let st, res = match solution with
@@ -132,7 +132,7 @@ let custom_install cli =
                 solution
             else solution
           in
-          OpamSolution.apply st ~requested ~assume_built:true solution
+          OpamSolution.apply st ~requested:nvs ~assume_built:true solution
       in
       OpamSolution.check_solution st (Success res);
       st
