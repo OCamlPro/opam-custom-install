@@ -27,7 +27,7 @@ depending on the one you are editing.
 
 The easiest way is to pin it directly, since it's unreleased yet:
 ```
-opam pin https://gitlab.ocamlpro.com/louis/opam-custom-install.git
+opam pin git+https://github.com/OCamlPro/opam-custom-install
 ```
 
 Since it's registered as a plugin, it should make the `opam custom-install`
