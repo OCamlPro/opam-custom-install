@@ -150,6 +150,7 @@ let custom_install cli =
           $ OpamArg.build_options cli
           $ no_recompilations $ packages $ cmd)
 
+[@@@ocaml.warning "-3"]
 let () =
   OpamStd.Option.iter OpamVersion.set_git OpamGitVersion.version;
   OpamSystem.init ();
