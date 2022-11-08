@@ -1,4 +1,4 @@
 (executable
  (public_name opam-custom-install)
- (flags (:standard -w -24))
+ (flags (:standard -w -24 -alert --deprecated))
  (libraries opam-client))
