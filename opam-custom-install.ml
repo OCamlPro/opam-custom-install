@@ -145,15 +145,14 @@ let custom_install cli =
           $ OpamArg.build_options cli
           $ no_recompilations $ packages $ cmd)
 
-[@@@ocaml.warning "-3"]
 let () =
   OpamStd.Option.iter OpamVersion.set_git OpamGitVersion.version;
   OpamSystem.init ();
   (* OpamArg.preinit_opam_envvariables (); *)
   OpamCliMain.main_catch_all @@ fun () ->
-  match Term.eval ~catch:false (custom_install (OpamCLIVersion.default, `Default)) with
-  | `Error _ -> exit (OpamStd.Sys.get_exit_code `Bad_arguments)
-  | _        -> exit (OpamStd.Sys.get_exit_code `Success)
+  let term, info = custom_install (OpamCLIVersion.default, `Default) in
+  exit @@ Cmd.eval ~catch:false (Cmd.v info term)
+
 
 
 
